@@ -1,0 +1,90 @@
+use aoc2021::day03;
+use aoc2021::read_lines;
+
+struct Bingo {
+    numbers: Vec<i64>,
+    is_called: Vec<bool>,
+}
+
+impl Bingo {
+    fn new(nums: Vec<i64>) -> Bingo {
+        assert!(nums.len() == 25);
+        Bingo {
+            numbers: nums,
+            is_called: vec![false; 25],
+        }
+    }
+
+    fn call(&mut self, num: i64) {
+        let pos = self.numbers.iter().position(|x| *x == num);
+        if let Some(p) = pos {
+            self.is_called[p] = true;
+        }
+    }
+
+    fn has_bingo(&self) -> bool {
+        for i in 0..5 {
+            if self.is_called[i * 5..(i + 1) * 5].iter().all(|x| *x) {
+                return true;
+            }
+            let mut c = true;
+            for j in 0..5 {
+                if !self.is_called[i + j * 5] {
+                    c = false;
+                }
+            }
+            if c {
+                return true;
+            }
+        }
+        false
+    }
+
+    fn sum_uncalled(&self) -> i64 {
+        self.numbers
+            .iter()
+            .zip(self.is_called.iter())
+            .filter_map(|(n, c)| if *c { Some(n) } else { None })
+            .sum()
+    }
+}
+
+fn num_list(s: &str) -> Vec<i64> {
+    s.split_ascii_whitespace()
+        .map(|x| x.parse::<i64>().unwrap())
+        .collect()
+}
+
+fn day04() {
+    let lines = read_lines("input/day04.txt", true).unwrap();
+    let nums: Vec<i64> = lines[0]
+        .split(",")
+        .map(|x| x.parse::<i64>().unwrap())
+        .collect();
+
+    let mut i = 1;
+    let mut cards = vec![];
+    while i < lines.len() {
+        let mut nums = vec![];
+        for j in 0..5 {
+            nums.append(&mut num_list(&lines[i + j]));
+        }
+        cards.push(Bingo::new(nums));
+
+        i += 5;
+    }
+
+    for n in nums {
+        for mut c in cards.iter_mut() {
+            c.call(n);
+            if c.has_bingo() {}
+        }
+    }
+}
+
+fn main() -> std::io::Result<()> {
+    //day01();
+    //day02();
+    day03();
+    Ok(())
+}

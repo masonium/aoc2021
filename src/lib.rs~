@@ -1,0 +1,171 @@
+//! AOC 2021 solutions
+use std::path::Path;
+
+/// Return the set of lines in the file, optionally removing any empty lines.
+pub fn read_lines<P: AsRef<Path>>(p: P, filter_empty: bool) -> std::io::Result<Vec<String>> {
+    let b = std::fs::read_to_string(p)?;
+    Ok(b.split("\n")
+        .map(|x| x.to_string())
+        .filter(|x| !filter_empty || !x.is_empty())
+        .collect())
+}
+
+/// day01 solution
+pub fn day01() {
+    let lines = read_lines("input/day01.txt", true).unwrap();
+    let nums: Vec<_> = lines.iter().map(|x| x.parse::<i32>().unwrap()).collect();
+
+    let mut inc = 0;
+    for i in 1..nums.len() {
+        if nums[i] > nums[i - 1] {
+            inc += 1;
+        }
+    }
+    println!("{}", inc);
+
+    inc = 0;
+    for i in 3..nums.len() {
+        if nums[i] > nums[i - 3] {
+            inc += 1;
+        }
+    }
+    println!("{}", inc);
+}
+
+pub fn day02() {
+    let lines = read_lines("input/day02.txt", true).unwrap();
+    {
+        let mut horiz = 0;
+        let mut depth = 0;
+        for inst in &lines {
+            let toks: Vec<_> = inst.split(" ").collect();
+            if toks.len() < 2 {
+                continue;
+            }
+            let dir = toks[0];
+            let dist = toks[1].parse::<i32>().unwrap();
+
+            match dir {
+                "forward" => {
+                    horiz += dist;
+                }
+                "down" => {
+                    depth += dist;
+                }
+                "up" => {
+                    depth -= dist;
+                    depth = std::cmp::max(depth, 0);
+                }
+                _ => {
+                    continue;
+                }
+            }
+        }
+
+        println!("{}", horiz * depth);
+    }
+    {
+        let mut horiz = 0;
+        let mut depth = 0;
+        let mut aim = 0;
+        for inst in lines {
+            let toks: Vec<_> = inst.split(" ").collect();
+            if toks.len() < 2 {
+                continue;
+            }
+            let dir = toks[0];
+            let dist = toks[1].parse::<i32>().unwrap();
+
+            match dir {
+                "forward" => {
+                    horiz += dist;
+                    depth += aim * dist
+                }
+                "down" => {
+                    aim += dist;
+                }
+                "up" => {
+                    aim -= dist;
+                }
+                _ => {
+                    continue;
+                }
+            }
+        }
+
+        println!("{}", horiz * depth);
+    }
+}
+
+fn filter_by_common(c: &Vec<Vec<u8>>, bit: usize, most_common: bool) -> Vec<Vec<u8>> {
+    let mut one_count = 0;
+    for x in c {
+        if x[bit] == b'1' {
+            one_count += 1;
+        }
+    }
+    let zero_count = c.len() - one_count;
+
+    let mut common: Vec<Vec<u8>> = vec![];
+    let target_bit = if most_common {
+        if one_count >= zero_count {
+            b'1'
+        } else {
+            b'0'
+        }
+    } else {
+        if one_count < zero_count {
+            b'1'
+        } else {
+            b'0'
+        }
+    };
+
+    for x in c {
+        if x[bit] == target_bit {
+            common.push(x.clone());
+        }
+    }
+    common
+}
+
+pub fn day03() {
+    let lines = read_lines("input/day03.txt", true).unwrap();
+
+    let mut one_count = vec![0; lines[0].len()];
+    for x in &lines {
+        for (i, b) in x.bytes().enumerate() {
+            if b == b'1' {
+                one_count[i] += 1;
+            }
+        }
+    }
+    let h = lines.len() / 2;
+    let gamma_str = one_count
+        .iter()
+        .map(|x| if *x > h { '1' } else { '0' })
+        .collect::<String>();
+    let gamma = i32::from_str_radix(&gamma_str, 2).unwrap();
+    let epsilon = (1 << lines[0].len()) - gamma - 1;
+
+    println!("{}", gamma * epsilon);
+
+    let num_bits = lines[0].len();
+    let mut oxy: Vec<_> = lines.iter().map(|x| x.clone().into_bytes()).collect();
+    let mut cos = oxy.clone();
+
+    for b in 0..num_bits {
+        if oxy.len() > 1 {
+            oxy = filter_by_common(&oxy, b, true);
+        }
+        if cos.len() > 1 {
+            cos = filter_by_common(&cos, b, false);
+        }
+    }
+
+    println!(
+        "{}",
+        i32::from_str_radix(&String::from_utf8(oxy[0].clone()).unwrap(), 2).unwrap()
+            * i32::from_str_radix(&String::from_utf8(cos[0].clone()).unwrap(), 2).unwrap()
+    );
+}
