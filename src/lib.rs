@@ -1,9 +1,9 @@
 //! AOC 2021 solutions
+pub use nd::prelude::*;
+pub use ndarray as nd;
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
-pub use ndarray as nd;
-pub use nd::prelude::*;
 
 /// Return the set of lines in the file, optionally removing any empty lines.
 pub fn read_lines<P: AsRef<Path>>(p: P, filter_empty: bool) -> std::io::Result<Vec<String>> {
@@ -316,7 +316,7 @@ pub fn day05() {
 
 pub fn num_fish(start: i64, days: i64) -> i64 {
     if days <= start {
-	return 1;
+        return 1;
     }
 
     let days_left = days - start - 1;
@@ -328,49 +328,75 @@ pub fn day06() {
 
     let mut num_fish_iter: Array2<Option<i64>> = nd::Array2::from_shape_fn((9, 257), |_| None);
     for s in 0..=8 {
-	num_fish_iter[(s, 0)] = Some(1);
+        num_fish_iter[(s, 0)] = Some(1);
     }
     for d in 1..=256 {
-	for s in 0..=8 {
-	    if s == 0 {
-		num_fish_iter[(s, d)] = Some(num_fish_iter[(6, d-1)].unwrap() + num_fish_iter[(8, d-1)].unwrap());
-	    } else {
-		num_fish_iter[(s, d)] = Some(num_fish_iter[(s-1, d-1)].unwrap());
-	    }
-	}
+        for s in 0..=8 {
+            if s == 0 {
+                num_fish_iter[(s, d)] =
+                    Some(num_fish_iter[(6, d - 1)].unwrap() + num_fish_iter[(8, d - 1)].unwrap());
+            } else {
+                num_fish_iter[(s, d)] = Some(num_fish_iter[(s - 1, d - 1)].unwrap());
+            }
+        }
     }
 
-
-    let fish = lines[0].split(",").map(|x| x.parse::<i64>().unwrap()).collect::<Vec<_>>();
+    let fish = lines[0]
+        .split(",")
+        .map(|x| x.parse::<i64>().unwrap())
+        .collect::<Vec<_>>();
     let mut count_fish = std::collections::HashMap::new();
     for f in fish {
-	*count_fish.entry(f).or_insert(0) += 1;
+        *count_fish.entry(f).or_insert(0) += 1;
     }
 
-    println!("{}", count_fish.iter().map(|(k, v)| v * num_fish_iter[(*k as usize, 80 as usize)].unwrap()).sum::<i64>());
-    println!("{}", count_fish.iter().map(|(k, v)| v * num_fish_iter[(*k as usize, 256 as usize)].unwrap()).sum::<i64>());
+    println!(
+        "{}",
+        count_fish
+            .iter()
+            .map(|(k, v)| v * num_fish_iter[(*k as usize, 80 as usize)].unwrap())
+            .sum::<i64>()
+    );
+    println!(
+        "{}",
+        count_fish
+            .iter()
+            .map(|(k, v)| v * num_fish_iter[(*k as usize, 256 as usize)].unwrap())
+            .sum::<i64>()
+    );
 }
-
 
 pub fn day07() {
     let lines = read_lines("input/day07.txt", true).unwrap();
-    let mut crabs: Vec<_> = lines[0].split(",").map(|x| x.parse::<i64>().unwrap()).collect();
+    let mut crabs: Vec<_> = lines[0]
+        .split(",")
+        .map(|x| x.parse::<i64>().unwrap())
+        .collect();
     crabs.sort();
     let mid1 = crabs[(crabs.len() - 1) / 2];
     let mid2 = crabs[crabs.len() / 2];
     assert!(mid1 == mid2);
     println!("{}", crabs.iter().map(|x| (*x - mid1).abs()).sum::<i64>());
 
-    let dist2 = |a: i64, b: i64| {(a-b).abs() * ((a-b).abs() +1) / 2};
+    let dist2 = |a: i64, b: i64| (a - b).abs() * ((a - b).abs() + 1) / 2;
 
     let m = (crabs.iter().sum::<i64>() as f64 / crabs.len() as f64).floor() as i64;
-    println!("{}", std::cmp::min(crabs.iter().map(|x| dist2(*x, m)).sum::<i64>(),
-				 crabs.iter().map(|x| dist2(*x, m+1)).sum::<i64>()));
+    println!(
+        "{}",
+        std::cmp::min(
+            crabs.iter().map(|x| dist2(*x, m)).sum::<i64>(),
+            crabs.iter().map(|x| dist2(*x, m + 1)).sum::<i64>()
+        )
+    );
 }
 
 /// Return a decoding map.
-pub fn decipher(inputs: &[String]) -> HashMap<char, char> {
-    let alpha = ['a', 'b', 'c', 'd', 'e', 'f', 'g'].iter().enumerate().map(|(i, c)| (*c, i)).collect::<HashMap<_, _>>();
+pub fn day08_decipher(inputs: &[String]) -> HashMap<char, char> {
+    let alpha = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
+        .iter()
+        .enumerate()
+        .map(|(i, c)| (*c, i))
+        .collect::<HashMap<_, _>>();
     let alpha_set: HashSet<char> = alpha.keys().cloned().collect();
 
     let mut seg2 = "";
@@ -380,16 +406,24 @@ pub fn decipher(inputs: &[String]) -> HashMap<char, char> {
     let mut seg5 = vec![];
 
     for x in inputs {
-	match x.len() {
-	    2 => {
-		seg2 = x;
-	    },
-	    3 => { seg3 = x; },
-	    4 => { seg4 = x; },
-	    5 => { seg5.push(x.chars().collect::<HashSet<char>>()); },
-	    6 => { seg6.push(x.chars().collect::<HashSet<char>>()); },
-	    _ => { }
-	}
+        match x.len() {
+            2 => {
+                seg2 = x;
+            }
+            3 => {
+                seg3 = x;
+            }
+            4 => {
+                seg4 = x;
+            }
+            5 => {
+                seg5.push(x.chars().collect::<HashSet<char>>());
+            }
+            6 => {
+                seg6.push(x.chars().collect::<HashSet<char>>());
+            }
+            _ => {}
+        }
     }
     assert!(seg6.len() == 3);
     assert!(seg5.len() == 3);
@@ -409,165 +443,204 @@ pub fn decipher(inputs: &[String]) -> HashMap<char, char> {
     assert!(bd.len() == 2);
 
     // d is in every 5 segment and missing in one 6 segment.
-    let i5: HashSet<char> = seg5.iter().fold(alpha_set.clone(), |x, y| x.intersection(&y).cloned().collect());
-    let i6: HashSet<char> = seg6.iter().fold(alpha_set.clone(), |x, y| x.intersection(&y).cloned().collect());
+    let i5: HashSet<char> = seg5.iter().fold(alpha_set.clone(), |x, y| {
+        x.intersection(&y).cloned().collect()
+    });
+    let i6: HashSet<char> = seg6.iter().fold(alpha_set.clone(), |x, y| {
+        x.intersection(&y).cloned().collect()
+    });
     let i5_no_6: HashSet<_> = i5.difference(&i6).cloned().collect();
     assert!(i5_no_6.len() == 1);
     let d_seg = *i5_no_6.iter().next().unwrap();
 
     let g_seg = {
-	let mut adg = i5.clone();
-	adg.remove(&a_seg);
-	adg.remove(&d_seg);
-	*adg.iter().next().unwrap()
+        let mut adg = i5.clone();
+        adg.remove(&a_seg);
+        adg.remove(&d_seg);
+        *adg.iter().next().unwrap()
     };
 
     // b is the 'other' one.
-    let bd_no_d: HashSet<char> = bd.difference(&[d_seg].iter().cloned().collect()).cloned().collect();
+    let bd_no_d: HashSet<char> = bd
+        .difference(&[d_seg].iter().cloned().collect())
+        .cloned()
+        .collect();
     assert_eq!(bd_no_d.len(), 1);
     let b_seg: char = *bd_no_d.iter().next().unwrap();
 
     // e is the one left;
     let e_seg: char = {
-	let mut all = cf.clone();
-	all = all.union(&bd).cloned().collect();
-	all.insert(a_seg);
-	all.insert(g_seg);
-	let last: Vec<char> = alpha_set.difference(&all).cloned().collect();
-	assert_eq!(last.len(), 1);
-	last[0]
+        let mut all = cf.clone();
+        all = all.union(&bd).cloned().collect();
+        all.insert(a_seg);
+        all.insert(g_seg);
+        let last: Vec<char> = alpha_set.difference(&all).cloned().collect();
+        assert_eq!(last.len(), 1);
+        last[0]
     };
 
     // c is appears with e in a 5-segment
     let c_seg: char = (|| {
-	for s5 in &seg5 {
-	    if s5.contains(&e_seg) {
-		return *s5.difference(&[e_seg, a_seg, d_seg, g_seg].iter().cloned().collect::<HashSet<char>>()).next().unwrap();
-	    }
-	}
-	panic!("");
+        for s5 in &seg5 {
+            if s5.contains(&e_seg) {
+                return *s5
+                    .difference(
+                        &[e_seg, a_seg, d_seg, g_seg]
+                            .iter()
+                            .cloned()
+                            .collect::<HashSet<char>>(),
+                    )
+                    .next()
+                    .unwrap();
+            }
+        }
+        panic!("");
     })();
 
     // f is appears with b in a 5-segment
     let f_seg: char = (|| {
-	for s5 in seg5 {
-	    if s5.contains(&b_seg) {
-		return *s5.difference(&[b_seg, a_seg, d_seg, g_seg].iter().cloned().collect::<HashSet<char>>()).next().unwrap();
-	    }
-	}
-	panic!("");
+        for s5 in seg5 {
+            if s5.contains(&b_seg) {
+                return *s5
+                    .difference(
+                        &[b_seg, a_seg, d_seg, g_seg]
+                            .iter()
+                            .cloned()
+                            .collect::<HashSet<char>>(),
+                    )
+                    .next()
+                    .unwrap();
+            }
+        }
+        panic!("");
     })();
 
-    let tups = [(a_seg, 'a'),
-		(b_seg, 'b'),
-		(c_seg, 'c'),
-		(d_seg, 'd'),
-		(e_seg, 'e'),
-		(f_seg, 'f'),
-		(g_seg, 'g')];
+    let tups = [
+        (a_seg, 'a'),
+        (b_seg, 'b'),
+        (c_seg, 'c'),
+        (d_seg, 'd'),
+        (e_seg, 'e'),
+        (f_seg, 'f'),
+        (g_seg, 'g'),
+    ];
 
     tups.iter().cloned().collect()
 }
 
 fn encode(decode_map: &HashMap<char, char>, outputs: &[String]) -> usize {
-    let m: HashMap<String,usize> = ["abcefg", "cf", "acdeg", "acdfg", "bcdf", "abdfg", "abdefg", "acf", "abcdefg", "abcdfg"]
-	.iter().enumerate().map(|(i, c)| (c.to_string(), i)).collect();
+    let m: HashMap<String, usize> = [
+        "abcefg", "cf", "acdeg", "acdfg", "bcdf", "abdfg", "abdefg", "acf", "abcdefg", "abcdfg",
+    ]
+    .iter()
+    .enumerate()
+    .map(|(i, c)| (c.to_string(), i))
+    .collect();
 
-    outputs.iter().map(|x| {
-	let mut c: Vec<char> = x.chars().map(|x| decode_map[&x]).collect();
-	c.sort();
-	let sorted: String = String::from_iter(c.iter());
-	m[&sorted]
-    }).fold(0, |a, b| a*10 + b)
+    outputs
+        .iter()
+        .map(|x| {
+            let mut c: Vec<char> = x.chars().map(|x| decode_map[&x]).collect();
+            c.sort();
+            let sorted: String = String::from_iter(c.iter());
+            m[&sorted]
+        })
+        .fold(0, |a, b| a * 10 + b)
 }
 
-pub fn day08()  {
+pub fn day08() {
     let lines = read_lines("input/day08.txt", true).unwrap();
-    let s: usize = lines.iter().map(|line| {
-	line
-	    .split(" ")
-	    .skip(11)
-	    .filter(|x| x.len() == 2 || x.len() == 3 || x.len() == 4 || x.len() == 7)
-	    .count()
-    }).sum();
+    let s: usize = lines
+        .iter()
+        .map(|line| {
+            line.split(" ")
+                .skip(11)
+                .filter(|x| x.len() == 2 || x.len() == 3 || x.len() == 4 || x.len() == 7)
+                .count()
+        })
+        .sum();
     println!("{}", s);
 
     let mut sum = 0;
     for line in &lines {
-	let toks: Vec<String> = line.split(" ").map(|x| x.to_owned()).collect();
-	let inputs = &toks[..10];
-	let outputs = &toks[11..15];
-	let decode_map = decipher(&inputs);
-	let digits = encode(&decode_map,&outputs);
-	sum += digits;
+        let toks: Vec<String> = line.split(" ").map(|x| x.to_owned()).collect();
+        let inputs = &toks[..10];
+        let outputs = &toks[11..15];
+        let decode_map = day08_decipher(&inputs);
+        let digits = encode(&decode_map, &outputs);
+        sum += digits;
     }
+
     println!("{}", sum);
 }
 
 pub fn day09() {
     let lines = read_lines("input/day09.txt", true).unwrap();
 
-    let mut h:Array2<usize> = Array2::zeros((lines.len(), lines[0].len()));
+    let mut h: Array2<usize> = Array2::zeros((lines.len(), lines[0].len()));
 
     for (r, l) in lines.iter().enumerate() {
-	for (j, c) in l.bytes().enumerate() {
-	    h[(r, j)] = (c - b'0') as usize;
-	}
+        for (j, c) in l.bytes().enumerate() {
+            h[(r, j)] = (c - b'0') as usize;
+        }
     }
 
     let d = h.dim();
     let mut risk = 0;
     let mut basins: Vec<(usize, usize)> = vec![];
     for i in 0..d.0 {
-	for j in 0..d.1 {
-	    let c = h[(i, j)];
-	    if i > 0 && c >= h[(i-1,j)] {
-		continue;
-	    }
-	    if j > 0 && c >= h[(i,j-1)] {
-		continue;
-	    }
-	    if i < d.0 - 1 && c >= h[(i+1,j)] {
-		continue;
-	    }
-	    if j < d.1 - 1 && c >= h[(i,j+1)] {
-		continue;
-	    }
-	    basins.push((i, j));
-	    risk += c + 1;
-	}
+        for j in 0..d.1 {
+            let c = h[(i, j)];
+            if i > 0 && c >= h[(i - 1, j)] {
+                continue;
+            }
+            if j > 0 && c >= h[(i, j - 1)] {
+                continue;
+            }
+            if i < d.0 - 1 && c >= h[(i + 1, j)] {
+                continue;
+            }
+            if j < d.1 - 1 && c >= h[(i, j + 1)] {
+                continue;
+            }
+            basins.push((i, j));
+            risk += c + 1;
+        }
     }
     println!("{}", risk);
 
-    let mut rem: Vec<((usize, usize), usize)> = basins.iter().enumerate().map(|(i, x)| (*x ,i)).collect();
+    let mut rem: Vec<((usize, usize), usize)> =
+        basins.iter().enumerate().map(|(i, x)| (*x, i)).collect();
     let mut basin_map: HashMap<(usize, usize), usize> = HashMap::new();
 
     while let Some((r @ (i, j), b)) = rem.pop() {
-	if h[(i, j)] == 9 {
-	    continue;
-	}
-	if basin_map.contains_key(&r) {
-	    continue;
-	}
-	basin_map.insert(r, b);
+        if h[(i, j)] == 9 {
+            continue;
+        }
+        if basin_map.contains_key(&r) {
+            continue;
+        }
+        basin_map.insert(r, b);
 
-	if i > 0 {
-	    rem.push(((i-1,j), b));
-	}
-	if j > 0 {
-	    rem.push(((i,j-1), b));
-	}
-	if i < d.0 - 1 {
-	    rem.push(((i+1,j), b));
-	}
-	if j < d.1 - 1 {
-	    rem.push(((i,j+1), b));
-	}
+        if i > 0 {
+            rem.push(((i - 1, j), b));
+        }
+        if j > 0 {
+            rem.push(((i, j - 1), b));
+        }
+        if i < d.0 - 1 {
+            rem.push(((i + 1, j), b));
+        }
+        if j < d.1 - 1 {
+            rem.push(((i, j + 1), b));
+        }
     }
 
     // compute the basin size
     let mut sizes: HashMap<usize, usize> = HashMap::new();
-    basin_map.values().for_each(|x| *sizes.entry(*x).or_insert(0) += 1);
+    basin_map
+        .values()
+        .for_each(|x| *sizes.entry(*x).or_insert(0) += 1);
     let mut r: Vec<usize> = sizes.values().cloned().collect();
     r.sort();
     r.reverse();
@@ -577,94 +650,114 @@ pub fn day09() {
 #[derive(Debug, Clone, Copy)]
 pub enum P10 {
     Corrupt(usize),
-    Incomplete(usize)
+    Incomplete(usize),
 }
 
 /// Return the first corrupted char, if there is one.
 pub fn fix(s: &str) -> P10 {
-    let fails: HashMap<char,usize> = ")]}>".chars().zip([3,57,1197,25137]).collect();
-    let finishes: HashMap<char,usize> = ")]}>".chars().zip([1,2,3,4]).collect();
-
+    let fails: HashMap<char, usize> = ")]}>".chars().zip([3, 57, 1197, 25137]).collect();
+    let finishes: HashMap<char, usize> = ")]}>".chars().zip([1, 2, 3, 4]).collect();
 
     let mut cstack = vec![];
     let opens: HashSet<char> = "[{(<".chars().collect();
     let closes: HashMap<char, char> = "[{(<".chars().zip("]})>".chars()).collect();
     for c in s.chars() {
-	if opens.contains(&c) {
-	    cstack.push(c)
-	} else {
-	    if let Some(x) = cstack.last() {
-		if closes[x] == c {
-		    cstack.pop();
-		} else {
-		    return P10::Corrupt(fails[&c]);
-		}
-	    } else {
-		return P10::Corrupt(fails[&c]);
-	    }
-	}
+        if opens.contains(&c) {
+            cstack.push(c)
+        } else {
+            if let Some(x) = cstack.last() {
+                if closes[x] == c {
+                    cstack.pop();
+                } else {
+                    return P10::Corrupt(fails[&c]);
+                }
+            } else {
+                return P10::Corrupt(fails[&c]);
+            }
+        }
     }
 
-    P10::Incomplete(cstack.iter().rev().fold(0, |a, b| a*5+finishes[&closes[b]]))
+    P10::Incomplete(
+        cstack
+            .iter()
+            .rev()
+            .fold(0, |a, b| a * 5 + finishes[&closes[b]]),
+    )
 }
 
 pub fn day10() {
     let lines = read_lines("input/day10.txt", true).unwrap();
     let errors: Vec<P10> = lines.iter().map(|s| fix(&s)).collect();
-    println!("{}", errors.iter().filter_map(|c| match *c { P10::Corrupt(x) => Some(x), _ => None }).sum::<usize>());
+    println!(
+        "{}",
+        errors
+            .iter()
+            .filter_map(|c| match *c {
+                P10::Corrupt(x) => Some(x),
+                _ => None,
+            })
+            .sum::<usize>()
+    );
 
-    let mut incs: Vec<usize> = errors.iter().filter_map(|c| match *c { P10::Incomplete(x) => Some(x), _ => None }).collect();
+    let mut incs: Vec<usize> = errors
+        .iter()
+        .filter_map(|c| match *c {
+            P10::Incomplete(x) => Some(x),
+            _ => None,
+        })
+        .collect();
     incs.sort();
     println!("{}", incs[incs.len() / 2]);
 }
 
 fn day11_step(e: &mut Array2<usize>) -> usize {
     let d = e.dim();
-    e.mapv_inplace(|x| x+1);
+    e.mapv_inplace(|x| x + 1);
 
     let mut flashed = Array2::from_elem((d.0, d.1), false);
     let mut num_flashed = 0;
 
     loop {
-	let mut nf = 0;
-	for i in 0..d.0 {
-	    for j in 0..d.1 {
-		// skip already flashed
-		if flashed[(i, j)] {
-		    continue;
-		}
-		if e[(i, j)] > 9 {
-		    // flash this one
-		    flashed[(i, j)] = true;
-		    nf += 1;
+        let mut nf = 0;
+        for i in 0..d.0 {
+            for j in 0..d.1 {
+                // skip already flashed
+                if flashed[(i, j)] {
+                    continue;
+                }
+                if e[(i, j)] > 9 {
+                    // flash this one
+                    flashed[(i, j)] = true;
+                    nf += 1;
 
-		    // increase energy of neightbos {
-		    let i_s = i as isize;
-		    let j_s = j as isize;
-		    for ni in std::cmp::max(i_s-1, 0)..=std::cmp::min(i_s+1, d.0 as isize-1) {
-			for nj in std::cmp::max(j_s-1, 0)..=std::cmp::min(j_s+1, d.1 as isize-1) {
-			    e[(ni as usize, nj as usize)] += 1;
-			}
-		    }
-		}
-	    }
-	}
-	if nf > 0 {
-	    num_flashed += nf;
-	} else {
-	    break;
-	}
+                    // increase energy of neightbos {
+                    let i_s = i as isize;
+                    let j_s = j as isize;
+                    for ni in std::cmp::max(i_s - 1, 0)..=std::cmp::min(i_s + 1, d.0 as isize - 1) {
+                        for nj in
+                            std::cmp::max(j_s - 1, 0)..=std::cmp::min(j_s + 1, d.1 as isize - 1)
+                        {
+                            e[(ni as usize, nj as usize)] += 1;
+                        }
+                    }
+                }
+            }
+        }
+        if nf > 0 {
+            num_flashed += nf;
+        } else {
+            break;
+        }
     }
     for i in 0..d.0 {
-	for j in 0..d.1 {
-	    if flashed[(i, j)] {
-		e[(i, j)] = 0;
-	    }
-	}
+        for j in 0..d.1 {
+            if flashed[(i, j)] {
+                e[(i, j)] = 0;
+            }
+        }
     }
 
     num_flashed
-
 }
 
 pub fn day11() {
@@ -672,30 +765,201 @@ pub fn day11() {
     let mut e: Array2<usize> = Array2::zeros((lines.len(), lines[0].len()));
 
     for (r, l) in lines.iter().enumerate() {
-	for (j, c) in l.bytes().enumerate() {
-	    e[(r, j)] = (c - b'0') as usize;
-	}
+        for (j, c) in l.bytes().enumerate() {
+            e[(r, j)] = (c - b'0') as usize;
+        }
     }
 
     let mut first_all = None;
     let mut num_flashed = 0;
     for i in 1..=100 {
-	let nf = day11_step(&mut e);
-	if nf == 100 && first_all == None {
-	    first_all = Some(i)
-	}
-	num_flashed += nf;
+        let nf = day11_step(&mut e);
+        if nf == 100 && first_all == None {
+            first_all = Some(i)
+        }
+        num_flashed += nf;
     }
     println!("{}", num_flashed);
     let mut i = 101;
     while let None = first_all {
-	let nf = day11_step(&mut e);
-	if nf == 100 {
-	    first_all = Some(i)
-	} else {
-	    i += 1;
-	}
+        let nf = day11_step(&mut e);
+        if nf == 100 {
+            first_all = Some(i)
+        } else {
+            i += 1;
+        }
     }
 
     println!("{}", i);
+}
+#[derive(Clone, Debug)]
+struct Path12 {
+    /// small caves that have been visited
+    pub visited: HashMap<String, usize>,
+
+    /// order list of visited structures
+    pub path: Vec<String>,
+}
+
+impl Path12 {
+    fn new() -> Path12 {
+        Path12 {
+            visited: [("start".to_string(), 1)].into_iter().collect(),
+            path: vec!["start".to_string()],
+        }
+    }
+
+    /// Return true if the small path hasn't been visited yet
+    fn can_add1(&self, n: &str) -> bool {
+        char::is_uppercase(n.as_bytes()[0] as char) || !self.visited.contains_key(n)
+    }
+
+    /// Return true if the small path has been visited at most once yet
+    fn can_add2(&self, n: &str) -> bool {
+        if char::is_uppercase(n.as_bytes()[0] as char) {
+	    return true;
+	}
+	if n == "start" {
+	    return false;
+	}
+	if !self.visited.contains_key(n) {
+	    return true;
+	}
+	if self.visited.values().all(|x| *x < 2) {
+	    return true;
+	}
+	return false;
+    }
+
+    fn last(&self) -> &str {
+        self.path.last().unwrap()
+    }
+
+    fn add(&self, n: &str) -> Path12 {
+        let mut v = self.visited.clone();
+	if char::is_lowercase(n.as_bytes()[0] as char) {
+            *v.entry(n.to_string()).or_default() += 1;
+	}
+
+        let mut path = self.path.clone();
+        path.push(n.to_string());
+        Path12 { visited: v, path }
+    }
+}
+
+// (setq lsp-log-io t)
+pub fn day12() {
+    let lines = read_lines("input/day12.txt", true).unwrap();
+
+    let mut edges: Vec<(String, String)> = vec![];
+    let mut edge_map: HashMap<String, Vec<String>> = HashMap::new();
+
+    for line in lines {
+        let mut toks: Vec<_> = line.split("-").map(|x| x.to_string()).collect();
+        assert_eq!(toks.len(), 2);
+
+        let t1 = toks.pop().unwrap();
+        let t0 = toks.pop().unwrap();
+        edges.push((t0.clone(), t1.clone()));
+        edge_map.entry(t0.clone()).or_default().push(t1.clone());
+        edge_map.entry(t1).or_default().push(t0);
+    }
+
+    // enumere all of the paths
+    let mut active_paths = vec![Path12::new()];
+
+    let mut paths = vec![];
+
+    while let Some(p) = active_paths.pop() {
+        let last = p.last();
+        for next in edge_map.get(last).unwrap_or(&vec![]) {
+            if p.can_add1(&next) {
+                let extend = p.add(next);
+                if next == "end" {
+                    paths.push(extend);
+                } else {
+                    active_paths.push(extend);
+                }
+            }
+        }
+    }
+
+    println!("{:?}", paths.len());
+
+    active_paths = vec![Path12::new()];
+    paths = vec![];
+
+    while let Some(p) = active_paths.pop() {
+        let last = p.last();
+        for next in edge_map.get(last).unwrap_or(&vec![]) {
+            if p.can_add2(&next) {
+                let extend = p.add(next);
+                if next == "end" {
+                    paths.push(extend);
+                } else {
+                    active_paths.push(extend);
+                }
+            }
+        }
+    }
+    
+    // for p in paths.iter().map(|x| x.path.join(",")) {
+    // 	println!("{}", p);
+    // }
+    println!("{}", paths.len());
+}
+
+pub fn day13() {
+    let lines = read_lines("input/day13.txt", true).unwrap();
+
+    let mut points = vec![];
+    let mut folds = vec![];
+    for line in lines {
+	if line.starts_with("fold") {
+	    let l = line.to_string();
+	    let axis: Vec<_> = l.split(" ").collect();
+	    let parts: Vec<_> = axis[2].split("=").collect();
+	    folds.push((parts[0].to_string(), parts[1].parse::<isize>().unwrap()));
+	} else {
+	    let toks: Vec<_> = line.split(",").collect();
+	    points.push((toks[0].parse::<isize>().unwrap(), toks[1].parse::<isize>().unwrap()));
+	}
+    }
+    let mut pset: HashSet<(isize, isize)> = HashSet::from_iter(points.into_iter());
+    for (i, fold) in folds.iter().enumerate() {
+	let mut new_pset = HashSet::new();
+	for p in &pset {
+	    if fold.0 == "x" {
+		if p.0 < fold.1 {
+		    new_pset.insert((p.0, p.1));
+		} else {
+		    new_pset.insert((2 * fold.1 - p.0, p.1));
+		}
+	    } else {
+		if p.1 < fold.1 {
+		    new_pset.insert((p.0, p.1));
+		} else {
+		    new_pset.insert((p.0, 2 * fold.1 - p.1));
+		}
+	    }
+	}
+	pset = new_pset;
+	if i == 0 {
+	    println!("{}", pset.len());
+	}
+    }
+    let x_min = pset.iter().map(|p| p.0).min().unwrap();
+    let x_max = pset.iter().map(|p| p.0).max().unwrap();
+    let y_min = pset.iter().map(|p| p.1).min().unwrap();
+    let y_max = pset.iter().map(|p| p.1).max().unwrap();
+    let mut arr = Array2::from_elem(((x_max-x_min+1) as usize, (y_max-y_min+1) as usize), ' ');
+    for p in pset.iter() {
+	arr[((p.0 - x_min) as usize, (p.1 - y_min) as usize)] = '#';
+    }
+    for y in y_min..=y_max {
+	for x in x_min..=x_max {
+	    print!("{}", arr[((x-x_min) as usize, (y-y_min) as usize)]);
+	}
+	println!("");
+    }
 }
