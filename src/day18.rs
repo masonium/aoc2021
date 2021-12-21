@@ -1,3 +1,5 @@
+use crate::read_lines;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Token {
     Left,
@@ -14,6 +16,7 @@ impl Token {
     }
 }
 
+#[allow(dead_code)]
 fn dbg_tokens(x: &[Token]) {
     for a in x {
 	match a {
@@ -170,7 +173,7 @@ pub fn magnitude(x: &[Token]) -> usize {
 }
 
 pub fn day18() {
-    let lines = read_lines("input/day18.txt", true).unwrap();
+    let lines = read_lines("input/day10.txt", true).unwrap();
 
     let a = parse(&lines[0]);
     let r = lines[1..].iter().map(|x| parse(&x)).fold(a, add);

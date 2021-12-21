@@ -6,9 +6,12 @@ use std::{cmp::Ord, collections::BinaryHeap};
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 pub mod day16;
+pub mod day18;
+pub mod day21;
 
 pub use day16::day16;
 pub use day18::day18;
+pub use day21::day21;
 
 /// Return the set of lines in the file, optionally removing any empty lines.
 pub fn read_lines<P: AsRef<Path>>(p: P, filter_empty: bool) -> std::io::Result<Vec<String>> {
