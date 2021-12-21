@@ -2,8 +2,13 @@
 pub use nd::prelude::*;
 pub use ndarray as nd;
 use regex::Regex;
+use std::{cmp::Ord, collections::BinaryHeap};
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
+pub mod day16;
+
+pub use day16::day16;
+pub use day18::day18;
 
 /// Return the set of lines in the file, optionally removing any empty lines.
 pub fn read_lines<P: AsRef<Path>>(p: P, filter_empty: bool) -> std::io::Result<Vec<String>> {
@@ -574,6 +579,20 @@ pub fn day08() {
     println!("{}", sum);
 }
 
+pub fn read_grid<P: AsRef<Path>>(path: P) -> Array2<usize> {
+    let lines = read_lines(path, true).unwrap();
+    let mut h: Array2<usize> = Array2::zeros((lines.len(), lines[0].len()));
+
+    for (r, l) in lines.iter().enumerate() {
+        for (j, c) in l.bytes().enumerate() {
+            h[(r, j)] = (c - b'0') as usize;
+        }
+    }
+
+    h
+}
+
+
 pub fn day09() {
     let lines = read_lines("input/day09.txt", true).unwrap();
 
@@ -962,4 +981,199 @@ pub fn day13() {
 	}
 	println!("");
     }
+}
+
+pub fn day14() {
+    let lines = read_lines("input/day14.txt", true).unwrap();
+
+    let val = Vec::from(lines[0].as_bytes());
+    let mut rules: HashMap<String, (String, String)> = HashMap::new();
+    for x in &lines[1..] {
+	let toks: Vec<String> = x.split(" -> ").map(|x| x.to_string()).collect();
+	let k = toks[0].as_bytes();
+	let v = toks[1].as_bytes()[0];
+	rules.insert(toks[0].clone(), (String::from_utf8_lossy(&[k[0], v]).to_string(),
+				       String::from_utf8_lossy(&[v, k[1]]).to_string()));
+    }
+
+    let mut bigram_counts: HashMap<String, usize> = HashMap::new();
+    for x in val.windows(2) {
+	let s = String::from_utf8_lossy(&x).to_string();
+	*bigram_counts.entry(s).or_default() += 1;
+    }
+
+    // after 10 iterations
+    for _ in 0..10 {
+	let mut new_bc: HashMap<String, _> = HashMap::new();
+	for (k ,v) in bigram_counts.iter() {
+	    let (a, b) = &rules[k];
+	    *new_bc.entry(a.to_string()).or_default() += v;
+	    *new_bc.entry(b.to_string()).or_default() += v;
+	}
+	bigram_counts = new_bc;
+    }
+
+    let mut m: HashMap<u8, usize> = HashMap::new();
+    bigram_counts.iter().for_each(|(b, v)| {
+	let s = b.as_bytes();
+	*m.entry(s[0]).or_default() += v;
+	*m.entry(s[1]).or_default() += v;
+    });
+
+    println!("{}", m.values().max().unwrap() /2 - m.values().min().unwrap() /2);
+
+    // 30 more iterations
+    for _ in 0..30 {
+	let mut new_bc: HashMap<String, _> = HashMap::new();
+	for (k ,v) in bigram_counts.iter() {
+	    let (a, b) = &rules[k];
+	    *new_bc.entry(a.to_string()).or_default() += v;
+	    *new_bc.entry(b.to_string()).or_default() += v;
+	}
+	bigram_counts = new_bc;
+    }
+
+    let mut m: HashMap<u8, usize> = HashMap::new();
+    bigram_counts.iter().for_each(|(b, v)| {
+	let s = b.as_bytes();
+	*m.entry(s[0]).or_default() += v;
+	*m.entry(s[1]).or_default() += v;
+    });
+    
+    println!("{}", m.values().max().unwrap() /2 - m.values().min().unwrap() /2);
+}
+
+#[derive(Debug, PartialEq, Eq)]
+struct Node {
+    path: Vec<(usize, usize)>,
+    dist: usize
+}
+
+impl Node {
+    fn next(&self, n: (usize, usize), h: usize) -> Node {
+	let mut p = self.path.clone();
+	p.push(n);
+	Node { path: p, dist: self.dist + h }
+    }
+
+    fn pos(&self) -> (usize, usize) {
+	*self.path.last().unwrap()
+    }
+    fn len(&self) -> usize {
+	self.path.len()
+    }
+}
+
+impl Ord for Node {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+	(other.dist, other.len()).cmp(&(self.dist, self.len()))
+    }
+}
+
+impl std::cmp::PartialOrd for Node {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+pub fn day15_solve(h: &Array2<usize>) {
+    let d = h.dim();
+    let mut active_paths = BinaryHeap::new();
+    active_paths.push(Node { path: vec![(0, 0)], dist: 0 });
+    let mut visited = HashSet::new();
+    
+    while let Some(ap) = active_paths.pop() {
+	if ap.pos() == (d.0-1, d.1-1) {
+	    println!("{}", ap.dist);
+	    break;
+	}
+	if visited.contains(&ap.pos()) {
+	    continue;
+	}
+	visited.insert(ap.pos());
+
+	if ap.pos().0 > 0 {
+	    let new_pos = (ap.pos().0 - 1, ap.pos().1);
+	    if !ap.path.contains(&new_pos) {
+		active_paths.push(ap.next(new_pos, h[new_pos]));
+	    }
+	}
+	if ap.pos().1 > 0 {
+	    let new_pos = (ap.pos().0, ap.pos().1 - 1);
+	    if !ap.path.contains(&new_pos) {
+		active_paths.push(ap.next(new_pos, h[new_pos]));
+	    }
+	}
+	if ap.pos().0 < d.0-1 {
+	    let new_pos = (ap.pos().0 + 1, ap.pos().1);
+	    if !ap.path.contains(&new_pos) {
+		active_paths.push(ap.next(new_pos, h[new_pos]));
+	    }
+	}
+	if ap.pos().1 < d.1-1 {
+	    let new_pos = (ap.pos().0, ap.pos().1 + 1);
+	    if !ap.path.contains(&new_pos) {
+		active_paths.push(ap.next(new_pos, h[new_pos]));
+	    }
+	}
+	//	println!("{:?}", active_paths);
+    }
+
+}
+
+pub fn day15() {
+    let lines = read_lines("input/day15.txt", true).unwrap();
+
+    let mut h: Array2<usize> = Array2::zeros((lines.len(), lines[0].len()));
+
+    for (r, l) in lines.iter().enumerate() {
+        for (j, c) in l.bytes().enumerate() {
+            h[(r, j)] = (c - b'0') as usize;
+        }
+    }
+
+    day15_solve(&h);
+    let d = h.dim();
+    let mut h2: Array2<usize> = Array2::zeros((d.0 * 5, d.1 * 5));
+    for zy in 0..5 {
+	for zx in 0..5 {
+	    for y in 0..d.0 {
+		for x in 0..d.1 {
+		    h2[(zy*d.0 + y, zx*d.1 + x)] = (h[(y, x)] + zy + zx - 1) % 9 + 1;
+		}
+	    }
+	}
+    }
+
+    day15_solve(&h2);
+}
+
+pub fn day17() {
+    let x_target = (156, 202);
+    let y_target = (-110, -69);
+
+    let mut max_height: Option<isize> = None;
+    let mut num_vel = 0;
+    for x_vel in -1000..2000 {
+	for y_vel in -3000..3000 {
+	    let mut mh = 0;
+	    let mut vel: [isize; 2] = [x_vel, y_vel];
+	    let mut pos = [0, 0];
+	    for _ in 0..500 {
+		pos[0] += vel[0];
+		pos[1] += vel[1];
+		vel[0] = vel[0].signum() * std::cmp::max(vel[0].abs() - 1, 0);
+		vel[1] -= 1;
+		mh = std::cmp::max(pos[1], mh);
+		if x_target.0 <= pos[0] && pos[0] <= x_target.1 &&
+		    y_target.0 <= pos[1] && pos[1] <= y_target.1 {
+			num_vel += 1;
+			max_height = Some(max_height.map(|z| std::cmp::max(z, mh)).unwrap_or(mh));
+			break;
+		    }
+	    }
+	}
+    };
+    println!("{}", max_height.unwrap());
+    println!("{}", num_vel);
 }

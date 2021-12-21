@@ -1,12 +1,10 @@
 use aoc2021::read_lines;
 #[allow(unused)]
 use std::collections::{HashMap, HashSet};
-//use ndarray as nd;
-//use nd::prelude::*;
+use ndarray as nd;
+use nd::prelude::*;
+use rayon::prelude::*;
 
-pub fn day14() {
-    let _lines = read_lines("input/day14.txt", true).unwrap();
-}
 
 fn main() -> std::io::Result<()> {
     // aoc2021::day01();
@@ -22,6 +20,10 @@ fn main() -> std::io::Result<()> {
     // aoc2021::day11();
     // aoc2021::day12();
     // aoc2021::day13();
-    day14();
+    // aoc2021::day14();
+    // aoc2021::day15();
+    // aoc2021::day16();
+    // aoc2021::day17();
+    // aoc2021::day18();
     Ok(())
 }
