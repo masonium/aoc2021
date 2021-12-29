@@ -65,7 +65,7 @@ fn hex(x: &[u8]) -> usize {
 fn parse_packet(x: &[u8]) -> Option<(Packet, usize, &[u8])> {
     let version = bin(&x[..3]);
     let id = bin(&x[3..6]);
-    println!("{}, {}", version, id);
+    // println!("{}, {}", version, id);
     if id == 4 {
 	let mut r = 6;
 	let mut lit = 0;
@@ -81,10 +81,10 @@ fn parse_packet(x: &[u8]) -> Option<(Packet, usize, &[u8])> {
     if id != 4 {
 	let type_id = x[6] - b'0';
 
-	println!("op {}", type_id);
+	// println!("op {}", type_id);
 	if type_id == 0 {
 	    let total_len = bin(&x[7..22]);
-	    println!("bit len {}", total_len);
+	    //println!("bit len {}", total_len);
 	    // length of subpackets
 	    let mut l: usize = 0;
 	    let mut next = &x[22..];
@@ -99,7 +99,7 @@ fn parse_packet(x: &[u8]) -> Option<(Packet, usize, &[u8])> {
 	    return Some((packet, 22 + total_len, next));
 	} else {
 	    let total_packets = bin(&x[7..18]);
-	    println!("packet len {}", total_packets);
+	    //println!("packet len {}", total_packets);
 	    // length of subpackets
 	    let mut l: usize = 0;
 	    let mut next = &x[18..];
@@ -121,13 +121,13 @@ fn parse_packet(x: &[u8]) -> Option<(Packet, usize, &[u8])> {
 pub fn day16() {
     let lines = read_lines("input/day16.txt", true).unwrap();
     let packet = &lines[0];
-    println!("{:04b}", 2);
+    //println!("{:04b}", 2);
 
     let mut  binary = vec![];
     for p in packet.as_bytes() {
 	binary.extend(format!("{:04b}", hex(&[*p])).as_bytes());
     }
-    println!("{}", String::from_utf8_lossy(&binary));
+    //println!("{}", String::from_utf8_lossy(&binary));
     let (packet, _, _) = parse_packet(&binary).unwrap();
 
     println!("{}", packet.sum_versions());

@@ -25,7 +25,7 @@ fn dbg_tokens(x: &[Token]) {
 	    Token::Num(a) => print!("{},", a)
 	}
     }
-    println!();
+    //println!();
 }
 
 pub fn explode(x: &mut Vec<Token>) -> bool {
@@ -135,7 +135,7 @@ pub fn parse(p: &str) -> Vec<Token> {
 	    b']' => Some(Token::Right),
 	    b',' => None,
 	    b'0'..=b'9' => Some(Token::Num((b - b'0') as usize)),
-	    _ => { panic!(); }
+	    _ => { unreachable!("cannot parse {}", b as char); }
 	}
     }).collect()
 }
@@ -173,7 +173,7 @@ pub fn magnitude(x: &[Token]) -> usize {
 }
 
 pub fn day18() {
-    let lines = read_lines("input/day10.txt", true).unwrap();
+    let lines = read_lines("input/day18.txt", true).unwrap();
 
     let a = parse(&lines[0]);
     let r = lines[1..].iter().map(|x| parse(&x)).fold(a, add);

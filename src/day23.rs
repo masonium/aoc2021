@@ -97,9 +97,6 @@ impl Amphs {
 	    return false;
 	}
 	use Pos::*;
-	// if i == 5 {
-	//     println!("{:?} {:?}", p, loc);
-	// }
 	match (p, loc) {
 	    (Hallway(start), Hallway(end)) => {
 		self.reachable_hallway(start, end)
@@ -293,23 +290,16 @@ fn day23_solve(a: &Amphs, max_rank: u8) {
     let mut visited = HashMap::new();
     bh.push(Reverse(amphipods));
 
-    let mut iter = 0;
     let mut max = 0;
     while let Some(Reverse(node)) = bh.pop() {
 	let mut added = vec![];
 
-	iter += 1;
-	if iter % 1000000 == 0 {
-	    println!("{} {} {}", node.cost, bh.len(), max);
-	}
 	if visited.contains_key(&node.amphs) {
 	    continue;
 	}
 
 	if node.amphs.done() {
-	    println!("found: {} {}", node.cost, iter);
-	    println!("{:?}", node);
-	    node.amphs.display(max_rank);
+	    println!("{}", node.cost);
 	    break;
 	}
 
@@ -375,16 +365,10 @@ fn day23_solve(a: &Amphs, max_rank: u8) {
 		},
 	    }
 	}
-	// for a in added {
-	//     println!("-------------------");
-	//     a.amphs.display();
-	// }
-	// println!("*******************");
     }
 }
 
 pub fn day23() {
-    //    let lines = read_lines("input/day23.txt", true).unwrap();
     use Pos::*;
     let amphs = Amphs {locs: vec![(2, Room(6, 1)),
 				  (2, Room(8, 1)),
@@ -394,7 +378,7 @@ pub fn day23() {
 				  (4, Room(4, 0)),
 				  (6, Room(2, 0)),
 				  (6, Room(4, 1))]};
-    //day23_solve(&amphs, 2);
+    day23_solve(&amphs, 2);
 
     let amphs = Amphs {locs: vec![(2, Room(6, 3)),
 				  (2, Room(8, 3)),
@@ -413,6 +397,6 @@ pub fn day23() {
 				  (2, Room(6, 2)),
 				  (2, Room(8, 1)),
 				  (6, Room(8, 2))]};
-    amphs.display(4);
+    //amphs.display(4);
     day23_solve(&amphs, 4);
 }
