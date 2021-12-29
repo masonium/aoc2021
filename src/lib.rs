@@ -7,11 +7,17 @@ use std::collections::{HashMap, HashSet};
 use std::path::Path;
 pub mod day16;
 pub mod day18;
+pub mod day19;
 pub mod day21;
+pub mod day23;
+pub mod day24;
 
 pub use day16::day16;
 pub use day18::day18;
+pub use day19::day19;
 pub use day21::day21;
+pub use day23::day23;
+pub use day24::day24;
 
 /// Return the set of lines in the file, optionally removing any empty lines.
 pub fn read_lines<P: AsRef<Path>>(p: P, filter_empty: bool) -> std::io::Result<Vec<String>> {
@@ -582,13 +588,25 @@ pub fn day08() {
     println!("{}", sum);
 }
 
-pub fn read_grid<P: AsRef<Path>>(path: P) -> Array2<usize> {
+pub fn read_num_grid<P: AsRef<Path>>(path: P) -> Array2<usize> {
     let lines = read_lines(path, true).unwrap();
     let mut h: Array2<usize> = Array2::zeros((lines.len(), lines[0].len()));
 
     for (r, l) in lines.iter().enumerate() {
         for (j, c) in l.bytes().enumerate() {
             h[(r, j)] = (c - b'0') as usize;
+        }
+    }
+
+    h
+}
+pub fn read_grid<P: AsRef<Path>>(path: P) -> Array2<u8> {
+    let lines = read_lines(path, true).unwrap();
+    let mut h: Array2<u8> = Array2::zeros((lines.len(), lines[0].len()));
+
+    for (r, l) in lines.iter().enumerate() {
+        for (j, c) in l.bytes().enumerate() {
+            h[(r, j)] = c;
         }
     }
 
@@ -1179,4 +1197,208 @@ pub fn day17() {
     };
     println!("{}", max_height.unwrap());
     println!("{}", num_vel);
+}
+
+
+fn to_num(x: &u8) -> u8 {
+    match *x {
+	b'.' => 0,
+	b'#' => 1,
+	_ => panic!()
+    }
+}
+pub fn enhance(arr: &Array2<u8>, m: &[u8], def: u8) -> Array2<u8> {
+    let d = arr.dim();
+    let nd = (d.0 + 2, d.1 + 2);
+    
+    let mut new_arr = Array2::zeros(nd);
+
+    for i in -1..=d.0 as isize {
+	for j in -1..=d.1 as isize {
+	    let mut s: usize = 0;
+	    for a in -1..=1 {
+		for b in -1..=1 {
+		    let y = i + a;
+		    let x = j + b;
+		    let v = if y < 0 || y >= d.0 as isize {
+			def
+		    } else if x < 0 || x >= d.1 as isize {
+			def
+		    }  else {
+			arr[[y as usize, x as usize]]
+		    };
+		    s = s * 2 + v as usize;
+		}
+	    }
+	    
+	    new_arr[[(i+1) as usize, (j+1) as usize]] = m[s];
+	}
+    }
+
+    new_arr
+}
+
+pub fn day20() {
+    let lines = read_lines("input/day20.txt", true).unwrap();
+    let m: Vec<u8> = lines[0].as_bytes().iter().map(to_num).collect();
+
+    let width = lines[1].len();
+    let height = lines.len() - 1;
+
+    let mut img = Array2::zeros((height as usize, width as usize));
+    for (i, row) in lines[1..].iter().enumerate() {
+	for (j, c) in row.bytes().enumerate() {
+	    img[(i, j)] = to_num(&c);
+	}
+    }
+    img = enhance(&img, &m, 0);
+    img = enhance(&img, &m, 1);
+
+    println!("{}", img.iter().filter(|x| **x == 1).count());
+
+    for _ in 0..24 {
+	img = enhance(&img, &m, 0);
+	img = enhance(&img, &m, 1);
+    }
+
+    println!("{}", img.iter().filter(|x| **x == 1).count());
+}
+
+#[derive(Clone, Hash, PartialEq, Eq, Debug)]
+struct Cube {
+    dims: [(isize, isize); 3],
+    v: bool,
+}
+
+impl Cube {
+    fn from_str(l: &str) -> Cube {
+	let toks: Vec<_> = l.split(" ").collect();
+	let v = toks[0] == "on";
+	let vals:Vec<_> = toks[1].split(",").collect();
+	
+	let mut ranges = vec![];
+	for (_i, v) in vals.iter().enumerate() {
+	    let r = v.split("=").collect::<Vec<_>>()[1];
+	    let a = r.split("..").map(|a| a.parse::<i32>().unwrap()).collect::<Vec<_>>();
+
+	    ranges.push((a[0] as isize, a[1] as isize));
+	}
+	
+	Cube { v, dims: [ranges[0], ranges[1], ranges[2]] }
+    }
+
+    fn intersect(&self, c: &Cube) -> Option<Cube> {
+	for i in 0..3 {
+	    if self.dims[i].0 > c.dims[i].1 {
+		return None;
+	    }
+	    if c.dims[i].0 > self.dims[i].1 {
+		return None;
+	    }
+	}
+
+	Some(Cube { dims: [(std::cmp::max(self.dims[0].0, c.dims[0].0),
+			    std::cmp::min(self.dims[0].1, c.dims[0].1)),
+			   (std::cmp::max(self.dims[1].0, c.dims[1].0),
+			    std::cmp::min(self.dims[1].1, c.dims[1].1)),
+			   (std::cmp::max(self.dims[2].0, c.dims[2].0),
+			    std::cmp::min(self.dims[2].1, c.dims[2].1))],
+		    v: self.v})
+    }
+
+    // return all other cubes except this
+    fn partition(&self, c: &Cube) -> Vec<Cube> {
+	if let Some(ise) = self.intersect(c) {
+	    let mut r = [vec![], vec![], vec![]];
+	    for i in 0..3 {
+		if self.dims[i].0 < ise.dims[i].0 {
+		    r[i].push((self.dims[i].0, ise.dims[i].0-1));
+		}
+		r[i].push(ise.dims[i]);
+		if ise.dims[i].1 < self.dims[i].1 {
+		    r[i].push((ise.dims[i].1+1, self.dims[i].1));
+		}
+	    }
+
+	    let mut cubes = vec![];
+	    for x in &r[0] {
+		for y in &r[1] {
+		    for z in &r[2] {
+			if ise.dims == [*x, *y, *z] {
+			    continue;
+			}
+			cubes.push(Cube { v: self.v, dims: [*x, *y, *z]});
+		    }
+		}
+	    }
+	    cubes
+	} else {
+	    return vec![self.clone()];
+	}
+    }
+    
+    fn volume(&self) -> usize {
+	self.dims.iter().map(|(x, y)| (y-x+1) as usize).product::<usize>()
+    }
+}
+
+pub fn day22() {
+    let lines = read_lines("input/day22.txt", true).unwrap();
+    
+    let mut c: Array3<bool> = Array3::from_elem((101,101,101), false);
+
+    'outer: for l in &lines {
+	let toks: Vec<_> = l.split(" ").collect();
+	let v = toks[0] == "on";
+	let vals:Vec<_> = toks[1].split(",").collect();
+	
+	let mut ranges = vec![];
+	for (_i, v) in vals.iter().enumerate() {
+	    let r = v.split("=").collect::<Vec<_>>()[1];
+	    let a = r.split("..").map(|a| a.parse::<i32>().unwrap()).collect::<Vec<_>>();
+
+	    if a[1] < -50 || a[0] > 50 {
+		continue 'outer;
+	    }
+	    ranges.push((std::cmp::max(a[0], -50), 
+			 std::cmp::min(a[1], 50)));
+	}
+	for x in ranges[0].0..=ranges[0].1 {
+	    for y in ranges[1].0..=ranges[1].1 {
+		for z in ranges[2].0..=ranges[2].1 {
+		    c[[(x + 50) as usize,(y + 50) as usize, (z+50) as usize]] = v;
+		}
+	    }
+	}
+    }
+    println!("{}", c.iter().filter(|x| **x).count());
+
+    let mut cubes: Vec<Cube> = vec![];
+
+    for l in &lines {
+	let mut new_cubes: Vec<Cube> = vec![];
+
+	let c = Cube::from_str(&l);
+
+	for oc in cubes.iter() {
+	    let isect = c.intersect(oc);
+	    if let Some(_x) = isect {
+		let parts = oc.partition(&c);
+		for p in parts {
+		    new_cubes.push(p);
+		}
+	    } else {
+		new_cubes.push(oc.clone());
+	    }
+	}
+	if c.v {
+	    new_cubes.push(c)
+	}
+	cubes = new_cubes;
+    }
+
+    println!("{}", cubes.iter().map(|c| {
+	assert!(c.v);
+	if c.v { c.volume() as isize } else { 0 }
+    }).sum::<isize>());
 }
